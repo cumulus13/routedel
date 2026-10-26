@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "routedel"
-version = "1.0.6"
+version = "1.0.7"
 description = "Delete, add, list and monitor IPv4 routes, with ntfy and Growl (GNTP) notifications to multiple servers."
 readme = "README.md"
 requires-python = ">=3.9"

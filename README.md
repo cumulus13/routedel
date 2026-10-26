@@ -71,13 +71,6 @@ Dependencies for notifications: none (stdlib `urllib` + raw GNTP 1.0 over socket
 
 MIT
 
-## Development & release
-
-```bash
-pip install -e ".[dev]" && pytest
-python -m build && twine check dist/*
-```
-
 ---
 
 ## 👤 Author
