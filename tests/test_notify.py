@@ -135,7 +135,7 @@ def test_multi_server_one_fails_others_succeed():
          {"host": "127.0.0.1", "port": g2.getsockname()[1]},
          {"host": "127.0.0.1", "port": 1, "timeout": 1}])
     assert len(n.targets) == 5 and n
-    n.send("multi", "info")
+    assert n.send("multi", "info") == 2          # dead ntfy + dead growl reported as failures
     assert len(_Ntfy.got) == 1 and len(seen1) == 2 and len(seen2) == 2
     ntfy.shutdown()
     g1.close()

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import json
 import logging
 import os
 import re
@@ -11,7 +10,8 @@ import socket
 import sys
 import threading
 import urllib.request
-from pathlib import Path
+
+from .config import load_config, parse_growl, split_ntfy_url
 
 APP_NAME = "routedel"
 HOST = socket.gethostname()
@@ -88,38 +88,34 @@ class Notifier:
         return bool(self.targets)
 
     @staticmethod
-    def _one(kind: str, cfg: dict, title: str, msg: str, level: str):
+    def _one(kind: str, cfg: dict, title: str, msg: str, level: str, results: list | None = None) -> bool:
         label = cfg.get("url") if kind == "ntfy" else f"{cfg.get('host')}:{cfg.get('port', 23053)}"
+        ok = True
         try:
             (_ntfy_send if kind == "ntfy" else _gntp_send)(cfg, title, msg, level)
             log.info("[%s] sent -> %s", kind, label)
         except Exception as e: # noqa
+            ok = False
             log.error("[%s] failed -> %s: %s", kind, label, e)
+        if results is not None:
+            results.append(ok)
+        return ok
 
-    def send(self, message: str, level: str = "info", wait: bool = True, title: str | None = None):
+    def send(self, message: str, level: str = "info", wait: bool = True, title: str | None = None) -> int:
+        """Send to all targets in parallel. With wait=True returns the number of failed targets."""
         if not self.targets:
-            return
+            return 0
         title = title or f"{APP_NAME}@{HOST}"
-        threads = [threading.Thread(target=self._one, args=(k, c, title, message, level), daemon=True)
+        results: list = []
+        threads = [threading.Thread(target=self._one, args=(k, c, title, message, level, results), daemon=True)
                    for k, c in self.targets]
         for t in threads:
             t.start()
-        if wait:
-            for t in threads:
-                t.join(timeout=15)
-
-
-def load_config(path: str | None) -> dict:
-    candidates = [path, os.environ.get("ROUTEDEL_CONFIG"),
-                  str(Path.home() / ".config/routedel/config.json"), str(Path.home() / ".routedel.json")]
-    for p in filter(None, candidates):
-        if Path(p).is_file():
-            try:
-                return json.loads(Path(p).read_text(encoding="utf-8"))
-            except Exception as e: # noqa
-                log.error("Bad config %s: %s", p, e)
-                sys.exit(1)
-    return {}
+        if not wait:
+            return 0
+        for t in threads:
+            t.join(timeout=15)
+        return results.count(False) + (len(self.targets) - len(results))  # unfinished threads count as failed
 
 
 def build_notifier(no_notify: bool = False, config: str | None = None,
@@ -129,9 +125,19 @@ def build_notifier(no_notify: bool = False, config: str | None = None,
     cfg = load_config(config)
     ntfy, growl = list(cfg.get("ntfy", [])), list(cfg.get("growl", []))
     for u in ntfy_urls or []:  # https://host/topic
-        base, _, topic = u.rstrip("/").rpartition("/")
+        try:
+            base, topic = split_ntfy_url(u)
+            if not topic:
+                raise ValueError(f"--ntfy needs a topic: https://host/TOPIC (got {u!r})")
+        except ValueError as e:
+            log.error("%s", e)
+            sys.exit(1)
         ntfy.append({"url": base, "topic": topic})
     for g in growl_hosts or []:  # host[:port]
-        host, _, port = g.partition(":")
-        growl.append({"host": host, "port": int(port or 23053)})
+        try:
+            host, port = parse_growl(g)
+        except ValueError as e:
+            log.error("%s", e)
+            sys.exit(1)
+        growl.append({"host": host, "port": port})
     return Notifier(ntfy, growl)

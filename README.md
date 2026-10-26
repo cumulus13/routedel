@@ -45,7 +45,25 @@ Or via a JSON config (first found wins): `--config FILE`, `$ROUTEDEL_CONFIG`,
 }
 ```
 
-Test with `routedel --test-notify`. Disable with `--no-notify`.
+Test with `routedel --test-notify` (or `routedel config test`); exit code is 1 if any target failed.
+Disable with `--no-notify`.
+
+### Managing the config: `routedel config`
+
+```bash
+routedel config init                      # create ~/.config/routedel/config.json (mode 0600); --example, --force
+routedel config path [--all]              # file in use / full lookup order
+routedel config add ntfy https://ntfy.sh/my-routes --token tk_xxx
+routedel config add ntfy https://ntfy.example.com --topic alerts --user u --password p
+routedel config add growl 192.168.1.10:23053 --password secret
+routedel config show [--json [--reveal]]  # table of targets (secrets masked); aliases: list, ls
+routedel config remove ntfy 2             # by # from `show`, or by text: `rm growl 192.168.1.20`
+routedel config validate                  # schema check, exit 1 on errors
+routedel config edit                      # $VISUAL / $EDITOR, then validates
+routedel config test                      # send a test to every target
+```
+
+Every subcommand accepts `-c/--config FILE` to operate on a specific file.
 Servers are contacted in parallel; one failing server does not affect the others.
 Dependencies for notifications: none (stdlib `urllib` + raw GNTP 1.0 over sockets).
 

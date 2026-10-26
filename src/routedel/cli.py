@@ -30,7 +30,7 @@ from .routes import (
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(formatter_class=CustomRichHelpFormatter, prog=APP_NAME)
-    p.add_argument('data', nargs="*", help='Route string, or "c" to read from clipboard')
+    p.add_argument('data', nargs="*", help='Route string, or "c" to read from clipboard (see also: routedel config -h)')
     p.add_argument('-V', '--version', action='version', version=f"{APP_NAME} {__version__}")
     p.add_argument('-m', '--metric', help='Remove route(s) by metric')
     p.add_argument('-l', '--list', action='store_true', help='List current routes')
@@ -51,8 +51,19 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv=None):
     log = setup_logging(exceptions=['pika', 'urllib3', 'urllib2', 'urllib', 'clipboard'])
-    p = build_parser()
     argv = sys.argv[1:] if argv is None else argv
+    if argv and argv[0] == "config":  # `routedel config ...` subcommands
+        from .config import run as config_run
+        try:
+            rc = config_run(argv[1:])
+        except BrokenPipeError:  # e.g. `routedel config show --json | head`
+            try:
+                os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+            except (OSError, ValueError):
+                pass
+            rc = 0
+        sys.exit(rc)
+    p = build_parser()
     if not argv:
         p.print_help()
         sys.exit(0)
@@ -63,7 +74,10 @@ def main(argv=None):
         if not notifier:
             log.error("No notification targets configured.")
             sys.exit(1)
-        notifier.send("Test notification", "info")
+        failed = notifier.send("Test notification", "info")
+        if failed:
+            log.error("%d of %d target(s) failed", failed, len(notifier.targets))
+            sys.exit(1)
         return
 
     if args.monitor:

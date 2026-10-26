@@ -7,4 +7,4 @@
 # License: MIT
 
 """routedel - delete / add / list / monitor IPv4 routes with ntfy + Growl notifications."""
-__version__ = "1.0.0"
+__version__ = "1.0.4"
