@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urlsplit
 
-from licface import CustomRichHelpFormatter
+from rchf import CustomRichHelpFormatter
 from rich.console import Console
 from rich.markup import escape
 from rich.table import Table
