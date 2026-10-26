@@ -78,15 +78,7 @@ pip install -e ".[dev]" && pytest
 python -m build && twine check dist/*
 ```
 
-Release to PyPI (GitHub Actions, Trusted Publishing — no token needed):
-
-1. On pypi.org → *Publishing* → add a pending publisher: owner `cumulus13`, repo `routedel`,
-   workflow `publish.yml`, environment `pypi`. (Repeat on test.pypi.org with environment `testpypi` if wanted.)
-2. In the GitHub repo create environments `pypi` (and `testpypi`).
-3. Bump `version` in `pyproject.toml` and `src/routedel/__init__.py`, commit, then publish a
-   GitHub Release tagged `vX.Y.Z`. The workflow tests, checks tag == version, builds and uploads.
-
-Manual alternative: `twine upload dist/*` (API token).
+---
 
 ## 👤 Author
         
