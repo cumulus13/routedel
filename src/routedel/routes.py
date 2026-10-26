@@ -12,14 +12,14 @@ import logging
 import re
 import shutil
 import subprocess
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from .notify import Notifier
 
 log = logging.getLogger("routedel")
 
-Route = Dict[str, str]
-Routes = Dict[int, Route]
+Route = dict[str, str]
+Routes = dict[int, Route]
 COLS = ["Destination", "Gateway", "Genmask", "Flags", "Metric", "Ref", "Use", "Iface"]
 
 
@@ -79,27 +79,27 @@ def parse_ip_route(text: str) -> Routes:
 def get_routes() -> Routes:
     try:
         if shutil.which("ip"):
-            p = subprocess.run(["ip", "-4", "route", "show"], capture_output=True, text=True)
+            p = subprocess.run(["ip", "-4", "route", "show"], capture_output=True, text=True) # noqa
             if p.returncode == 0:
                 return parse_ip_route(p.stdout)
         if shutil.which("route"):
-            p = subprocess.run(["route", "-n"], capture_output=True, text=True)
+            p = subprocess.run(["route", "-n"], capture_output=True, text=True) # noqa
             return parse_route_table(p.stdout)
-    except Exception as e:
+    except Exception as e: # noqa
         log.error("Failed to read routes: %s", e)
     return {}
 
 
-def find_by_metric(data: Routes, metric: Any) -> List[Tuple[int, Route]]:
+def find_by_metric(data: Routes, metric: Any) -> list[tuple[int, Route]]:
     return [(k, e) for k, e in data.items() if str(e.get("Metric", "")) == str(metric)]
 
 
-def _run(cmd: List[str]) -> Tuple[bool, str]:
-    p = subprocess.run(cmd, capture_output=True, text=True)
+def _run(cmd: list[str]) -> tuple[bool, str]:
+    p = subprocess.run(cmd, capture_output=True, text=True) # noqa
     return p.returncode == 0, (p.stderr or p.stdout).strip()
 
 
-def build_cmd(action: str, dest: str, mask: str, gw: str, iface: str, metric: str) -> List[str]:
+def build_cmd(action: str, dest: str, mask: str, gw: str, iface: str, metric: str) -> list[str]:
     """Build the add/del command. action: 'add' | 'del'."""
     has_gw = gw not in ("", "0.0.0.0")
     has_metric = metric not in ("", "0", None)

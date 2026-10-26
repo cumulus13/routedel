@@ -78,7 +78,7 @@ def test_delete_unsupported_token_count():
 
 
 def test_metric_not_found(monkeypatch):
-    monkeypatch.setattr(cli, "get_routes", lambda: {})
+    monkeypatch.setattr(cli, "get_routes", dict)
     with pytest.raises(SystemExit) as e:
         cli.main(["-m", "5", "--no-notify"])
     assert e.value.code == 1

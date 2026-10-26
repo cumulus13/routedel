@@ -18,8 +18,14 @@ from richcolorlog import setup_logging
 from . import __version__
 from .display import console, create_route_table, monitor_routes
 from .notify import APP_NAME, build_notifier
-from .routes import (delete_default, delete_entry, find_by_metric, get_routes, parse_route_table,
-                     route_action)
+from .routes import (
+    delete_default,
+    delete_entry,
+    find_by_metric,
+    get_routes,
+    parse_route_table,
+    route_action,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:

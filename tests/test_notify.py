@@ -16,12 +16,12 @@ from routedel import notify
 
 
 class _Ntfy(BaseHTTPRequestHandler):
-    got = []
+    got = [] # noqa
     status = 200
 
     def do_POST(self):
         body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
-        _Ntfy.got.append((self.path, dict(self.headers), body.decode()))
+        self.got.append((self.path, dict(self.headers), body.decode()))
         self.send_response(_Ntfy.status)
         self.end_headers()
         self.wfile.write(b"{}")
@@ -61,7 +61,7 @@ def _gntp_server(password="", reply_ok=True):
             auth_ok = True
             if password:
                 tok = first.split()[-1]  # SHA256:HASH.SALT
-                algo, rest = tok.split(":")
+                _algo, rest = tok.split(":")
                 h, salt = rest.split(".")
                 key = hashlib.sha256(password.encode() + bytes.fromhex(salt)).digest()
                 auth_ok = hashlib.sha256(key).hexdigest().upper() == h
@@ -92,7 +92,7 @@ def test_ntfy_http_error_raises():
     try:
         notify._ntfy_send({"url": f"http://127.0.0.1:{srv.server_port}", "topic": "t"}, "T", "x", "info")
         assert False, "should raise"
-    except Exception as e:
+    except Exception as e: # noqa
         assert "403" in str(e)
     srv.shutdown()
 

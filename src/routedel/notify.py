@@ -1,4 +1,6 @@
 """ntfy (HTTP) and Growl (GNTP 1.0) notifications. Stdlib only. Multiple servers, sent in parallel."""
+from __future__ import annotations
+
 import base64
 import hashlib
 import json
@@ -10,7 +12,6 @@ import sys
 import threading
 import urllib.request
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 APP_NAME = "routedel"
 HOST = socket.gethostname()
@@ -80,8 +81,8 @@ def _gntp_send(cfg: dict, title: str, message: str, level: str):
 
 
 class Notifier:
-    def __init__(self, ntfy: List[dict], growl: List[dict]):
-        self.targets: List[Tuple[str, dict]] = [("ntfy", c) for c in ntfy] + [("growl", c) for c in growl]
+    def __init__(self, ntfy: list[dict], growl: list[dict]):
+        self.targets: list[tuple[str, dict]] = [("ntfy", c) for c in ntfy] + [("growl", c) for c in growl]
 
     def __bool__(self):
         return bool(self.targets)
@@ -92,10 +93,10 @@ class Notifier:
         try:
             (_ntfy_send if kind == "ntfy" else _gntp_send)(cfg, title, msg, level)
             log.info("[%s] sent -> %s", kind, label)
-        except Exception as e:
+        except Exception as e: # noqa
             log.error("[%s] failed -> %s: %s", kind, label, e)
 
-    def send(self, message: str, level: str = "info", wait: bool = True, title: Optional[str] = None):
+    def send(self, message: str, level: str = "info", wait: bool = True, title: str | None = None):
         if not self.targets:
             return
         title = title or f"{APP_NAME}@{HOST}"
@@ -108,21 +109,21 @@ class Notifier:
                 t.join(timeout=15)
 
 
-def load_config(path: Optional[str]) -> dict:
+def load_config(path: str | None) -> dict:
     candidates = [path, os.environ.get("ROUTEDEL_CONFIG"),
                   str(Path.home() / ".config/routedel/config.json"), str(Path.home() / ".routedel.json")]
     for p in filter(None, candidates):
         if Path(p).is_file():
             try:
                 return json.loads(Path(p).read_text(encoding="utf-8"))
-            except Exception as e:
+            except Exception as e: # noqa
                 log.error("Bad config %s: %s", p, e)
                 sys.exit(1)
     return {}
 
 
-def build_notifier(no_notify: bool = False, config: Optional[str] = None,
-                   ntfy_urls: Optional[List[str]] = None, growl_hosts: Optional[List[str]] = None) -> Notifier:
+def build_notifier(no_notify: bool = False, config: str | None = None,
+                   ntfy_urls: list[str] | None = None, growl_hosts: list[str] | None = None) -> Notifier:
     if no_notify:
         return Notifier([], [])
     cfg = load_config(config)

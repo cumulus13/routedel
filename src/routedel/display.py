@@ -10,7 +10,6 @@
 import signal
 import threading
 from datetime import datetime
-from typing import Tuple
 
 from rich.align import Align
 from rich.console import Console
@@ -56,11 +55,11 @@ def create_monitor_layout(routes: Routes, last_update: str, interval: float, n_t
     return layout
 
 
-def route_key(e: Route) -> Tuple[str, ...]:
+def route_key(e: Route) -> tuple[str, ...]:
     return tuple(e.get(c, "") for c in ("Destination", "Gateway", "Genmask", "Metric", "Iface"))
 
 
-def fmt_key(k: Tuple[str, ...]) -> str:
+def fmt_key(k: tuple[str, ...]) -> str:
     d, g, m, met, i = k
     return f"{d}/{prefixlen(m)} via {g} dev {i} metric {met}"
 
@@ -100,7 +99,7 @@ def monitor_routes(interval: float, notifier: Notifier):
                     live.update(create_monitor_layout(routes, datetime.now().strftime("%H:%M:%S"),
                                                       interval, len(notifier.targets)))
                     live.refresh()
-                except Exception as e:
+                except Exception as e: # noqa
                     live.update(Panel(Align.center(Text(f"Error: {e}\nRetrying in {interval}s", style="bold red")),
                                       title="Error", style="bold red"))
                     live.refresh()
